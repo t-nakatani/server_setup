@@ -15,6 +15,14 @@ sudo usermod -aG sudo {username}
 ssh-copy-id {username}@{hostname or ip}
 ```
 
+## git
+```
+cd ~/.ssh
+ssh-keygen -t rsa
+cat id_rsa.pub
+git clone git@github.com:t-nakatani/server_setup.git
+```
+
 ## sshの設定を上書き
 * ポート番号を変更
 * パスワード認証を無効化
