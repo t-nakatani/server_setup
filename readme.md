@@ -62,6 +62,22 @@ sudo ./ufw-setup.sh
 ```
 
 
+## 自動セキュリティアップデート
+
+unattended-upgrades を使ってセキュリティアップデートを自動適用する。
+
+```
+cd setup
+chmod +x unattended-upgrades-setup.sh
+sudo ./unattended-upgrades-setup.sh
+```
+
+設定確認:
+```
+systemctl status unattended-upgrades
+cat /etc/apt/apt.conf.d/20auto-upgrades
+```
+
 ## uv のインストール
 ```
 curl -LsSf https://astral.sh/uv/install.sh | sh

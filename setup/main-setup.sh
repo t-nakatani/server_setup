@@ -12,4 +12,8 @@ echo "Starting UFW firewall setup..."
 chmod +x ./ufw-setup.sh
 ./ufw-setup.sh
 
+echo "Starting unattended-upgrades setup..."
+chmod +x ./unattended-upgrades-setup.sh
+./unattended-upgrades-setup.sh
+
 echo "All setups are complete."
