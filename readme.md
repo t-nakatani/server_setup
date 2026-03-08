@@ -78,6 +78,23 @@ systemctl status unattended-upgrades
 cat /etc/apt/apt.conf.d/20auto-upgrades
 ```
 
+## sudo NOPASSWD
+
+指定ユーザーに対してパスワードなしでsudoを許可する。
+`/etc/sudoers.d/{username}` にルールを作成し、`visudo -c` で検証する。
+
+```
+sudo ./setup/sudo-nopasswd-setup.sh {username}
+```
+
+引数を省略すると現在のユーザーが対象になる。
+
+```
+sudo ./setup/sudo-nopasswd-setup.sh
+```
+
+**注意**: `main-setup.sh` には含まれていません（ユーザー名の指定が必要なオプション設定のため）。
+
 ## uv のインストール
 ```
 curl -LsSf https://astral.sh/uv/install.sh | sh
