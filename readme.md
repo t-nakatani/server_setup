@@ -41,6 +41,17 @@ Host {host-name}
     IdentityFile {path} # ex. ~/.ssh/id_rsa
 ```
 
+## ファイアウォール
+UFW を使って受信をデフォルト拒否し、SSH ポート (53122/tcp) のみ許可する。
+
+```
+cd setup
+chmod +x ufw-setup.sh
+sudo ./ufw-setup.sh
+```
+
+`main-setup.sh` を実行する場合は自動で含まれる。
+
 ## git
 ~/.gitconfigを書き換える
 ```gitconfig
