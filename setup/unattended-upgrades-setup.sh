@@ -18,6 +18,6 @@ EOF
 
 echo "Verifying unattended-upgrades service..."
 sudo systemctl enable unattended-upgrades
-sudo systemctl status unattended-upgrades --no-pager
+sudo systemctl is-enabled unattended-upgrades
 
 echo "unattended-upgrades setup complete."
