@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 SSH_PORT=53122
 CONFIG_FILE="/etc/ssh/sshd_config"
