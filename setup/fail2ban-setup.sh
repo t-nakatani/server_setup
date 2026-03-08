@@ -18,7 +18,7 @@ EOF
 
 # fail2ban の有効化・起動
 sudo systemctl enable fail2ban
-sudo systemctl start fail2ban
+sudo systemctl restart fail2ban
 
 # ステータス確認
 sudo fail2ban-client status
