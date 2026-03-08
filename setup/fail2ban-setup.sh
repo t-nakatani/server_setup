@@ -12,6 +12,8 @@ port = 53122
 maxretry = 5
 bantime = 3600
 findtime = 600
+# Ubuntu 24.04 uses ssh.service instead of sshd.service
+journalmatch = _SYSTEMD_UNIT=ssh.service + _COMM=sshd
 EOF
 
 # fail2ban の有効化・起動
