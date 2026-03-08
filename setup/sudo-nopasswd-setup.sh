@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-USERNAME="${1:-$(whoami)}"
+USERNAME="${1:-${SUDO_USER:?\"Usage: sudo $0 <username> (or run via sudo so SUDO_USER is set)\"}}"
 
 echo "Configuring sudo NOPASSWD for user: ${USERNAME}"
 
