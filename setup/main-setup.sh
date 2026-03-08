@@ -8,4 +8,8 @@ echo "Starting Zsh setup..."
 chmod +x ./zsh-setup.sh
 ./zsh-setup.sh
 
-echo "All setups are complete." 
+echo "Starting UFW firewall setup..."
+chmod +x ./ufw-setup.sh
+./ufw-setup.sh
+
+echo "All setups are complete."
