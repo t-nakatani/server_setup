@@ -52,6 +52,26 @@ sudo ./ufw-setup.sh
 
 `main-setup.sh` を実行する場合は自動で含まれる。
 
+## fail2ban
+SSH ブルートフォース攻撃対策として fail2ban を導入する。
+
+```
+cd setup
+chmod +x fail2ban-setup.sh
+sudo ./fail2ban-setup.sh
+```
+
+設定内容 (`/etc/fail2ban/jail.local`):
+* ポート: 53122 (SSH カスタムポート)
+* maxretry: 5 (5回失敗で ban)
+* bantime: 3600 (1時間 ban)
+* findtime: 600 (10分以内の試行をカウント)
+
+ステータス確認:
+```
+sudo fail2ban-client status sshd
+```
+
 ## git
 ~/.gitconfigを書き換える
 ```gitconfig
