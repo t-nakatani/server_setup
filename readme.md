@@ -1,121 +1,132 @@
-## ユーザー作成
+# サーバーセットアップ
+
+## 手順概要
+
+1. ユーザー作成・SSH 鍵登録 (手動)
+2. SSH ハードニング (手動)
+3. メインセットアップ (自動: `main-setup.sh`)
+4. 個別設定 (手動: git config, GitHub SSH 鍵, sudo NOPASSWD)
+
+---
+
+## 1. ユーザー作成
 
 ```
 sudo adduser {newuser}
-```
-
-ユーザーをsudoグループに追加する場合
-```
 sudo usermod -aG sudo {username}
 ```
 
-## 公開鍵でのログインを可能に
+### 公開鍵でのログインを可能に
 
+ローカルマシンから実行:
 ```
 ssh-copy-id {username}@{hostname or ip}
 ```
 
-## git
+## 2. SSH ハードニング
+
+ポート番号変更・パスワード認証無効化・root ログイン無効化を行う。
+
+サーバー上でこのリポジトリを clone:
 ```
 cd ~/.ssh
 ssh-keygen -t rsa
 cat id_rsa.pub
+# → GitHub に登録
 git clone git@github.com:t-nakatani/server_setup.git
 ```
 
-## sshの設定を上書き
-* ポート番号を変更
-* パスワード認証を無効化
-* 公開鍵認証を有効化
-
+SSH 設定を上書き:
 ```
 chmod +x update_ssh_config.sh
 sudo ./update_ssh_config.sh
 ```
 
+ローカルの `~/.ssh/config` に追加:
 ```
 Host {host-name}
     HostName {hostname or ip}
     User {username}
-    Port {port}
-    IdentityFile {path} # ex. ~/.ssh/id_rsa
+    Port 53122
+    IdentityFile ~/.ssh/id_rsa
 ```
 
-## ファイアウォール
-UFW を使って受信をデフォルト拒否し、SSH ポート (53122/tcp) のみ許可する。
+## 3. メインセットアップ
+
+以下を一括で実行する:
+
+| ステップ | 内容 |
+|----------|------|
+| base-setup | apt update/upgrade, 基本パッケージ (git, vim, curl, wget, unzip), タイムゾーン (Asia/Tokyo) |
+| docker-setup | Docker, Docker Compose |
+| zsh-setup | Zsh, peco, git-prompt |
+| ufw-setup | UFW ファイアウォール (SSH ポートのみ許可) |
+| fail2ban-setup | fail2ban (SSH ブルートフォース対策: maxretry=5, bantime=1h) |
+| unattended-upgrades-setup | セキュリティアップデート自動適用 |
+| uv-setup | uv (Python パッケージマネージャ) |
 
 ```
 cd setup
-chmod +x ufw-setup.sh
-sudo ./ufw-setup.sh
+chmod +x main-setup.sh
+sudo ./main-setup.sh
 ```
 
-`main-setup.sh` を実行する場合は自動で含まれる。
+### 個別実行
 
-## fail2ban
-SSH ブルートフォース攻撃対策として fail2ban を導入する。
-
+各スクリプトは単独でも実行可能:
 ```
 cd setup
-chmod +x fail2ban-setup.sh
-sudo ./fail2ban-setup.sh
+sudo ./base-setup.sh
+sudo ./docker-setup.sh
+# ...
 ```
 
-設定内容 (`/etc/fail2ban/jail.local`):
-* ポート: 53122 (SSH カスタムポート)
-* maxretry: 5 (5回失敗で ban)
-* bantime: 3600 (1時間 ban)
-* findtime: 600 (10分以内の試行をカウント)
+### ステータス確認
 
-ステータス確認:
 ```
+# UFW
+sudo ufw status verbose
+
+# fail2ban
 sudo fail2ban-client status sshd
-```
 
-## git
-~/.gitconfigを書き換える
-```gitconfig
-[user]
-    name = "My Name"
-    email = myname@example.com
-
-```
-
-
-## 自動セキュリティアップデート
-
-unattended-upgrades を使ってセキュリティアップデートを自動適用する。
-
-```
-cd setup
-chmod +x unattended-upgrades-setup.sh
-sudo ./unattended-upgrades-setup.sh
-```
-
-設定確認:
-```
-systemctl status unattended-upgrades
+# unattended-upgrades
+systemctl is-enabled unattended-upgrades
 cat /etc/apt/apt.conf.d/20auto-upgrades
+
+# Docker
+docker --version && docker compose version
+
+# uv
+uv --version
 ```
 
-## sudo NOPASSWD
+## 4. 個別設定 (手動)
 
-指定ユーザーに対してパスワードなしでsudoを許可する。
-`/etc/sudoers.d/{username}` にルールを作成し、`visudo -c` で検証する。
+### git config
+
+```
+git config --global user.name "My Name"
+git config --global user.email "myname@example.com"
+```
+
+### GitHub SSH 鍵
+
+```
+ssh-keygen -t ed25519 -C "{host-name}"
+cat ~/.ssh/id_ed25519.pub
+# → GitHub Settings → SSH and GPG keys に登録
+
+ssh-keyscan github.com >> ~/.ssh/known_hosts
+ssh -T git@github.com
+```
+
+### sudo NOPASSWD (任意)
+
+指定ユーザーに対してパスワードなしで sudo を許可する。
 
 ```
 sudo ./setup/sudo-nopasswd-setup.sh {username}
 ```
 
-引数を省略すると現在のユーザーが対象になる。
-
-```
-sudo ./setup/sudo-nopasswd-setup.sh
-```
-
-**注意**: `main-setup.sh` には含まれていません（ユーザー名の指定が必要なオプション設定のため）。
-
-## uv のインストール
-```
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
+引数省略時は `$SUDO_USER` (sudo の呼び出し元ユーザー) が対象。
