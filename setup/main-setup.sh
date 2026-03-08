@@ -16,4 +16,8 @@ echo "Starting unattended-upgrades setup..."
 chmod +x ./unattended-upgrades-setup.sh
 ./unattended-upgrades-setup.sh
 
+echo "Starting fail2ban setup..."
+chmod +x ./fail2ban-setup.sh
+./fail2ban-setup.sh
+
 echo "All setups are complete."
