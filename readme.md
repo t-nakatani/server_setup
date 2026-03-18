@@ -30,8 +30,8 @@ ssh-copy-id {username}@{hostname or ip}
 サーバー上でこのリポジトリを clone:
 ```
 cd ~/.ssh
-ssh-keygen -t rsa
-cat id_rsa.pub
+ssh-keygen -t ed25519 -C "$(hostname)-github"
+cat id_ed25519.pub
 # → GitHub に登録
 git clone git@github.com:t-nakatani/server_setup.git
 ```
@@ -48,7 +48,7 @@ Host {host-name}
     HostName {hostname or ip}
     User {username}
     Port 53122
-    IdentityFile ~/.ssh/id_rsa
+    IdentityFile ~/.ssh/id_ed25519
 ```
 
 ## 3. メインセットアップ
@@ -121,12 +121,37 @@ ssh-keyscan github.com >> ~/.ssh/known_hosts
 ssh -T git@github.com
 ```
 
-### sudo NOPASSWD (任意)
+### ユーザー権限分離
 
-指定ユーザーに対してパスワードなしで sudo を許可する。
+Bot 運用 (deploy) とシステム管理 (admin-agent) を分離する。
 
+```bash
+# 1. admin-agent ユーザーを作成（sudo NOPASSWD:ALL + deploy の SSH 鍵をコピー）
+sudo ./setup/admin-agent-setup.sh deploy
+
+# 2. deploy ユーザーから sudo 権限を剥奪
+sudo ./setup/deploy-lockdown.sh deploy
 ```
-sudo ./setup/sudo-nopasswd-setup.sh {username}
+
+| ユーザー | 用途 | 権限 |
+|----------|------|------|
+| deploy | Bot デプロイ・運用 | docker グループのみ |
+| admin-agent | ライブラリインストール・システム管理 | sudo NOPASSWD:ALL + docker |
+
+ローカルの `~/.ssh/config` に追加:
+```
+Host {host-name}-admin
+    HostName {hostname or ip}
+    User admin-agent
+    Port 53122
+    IdentityFile ~/.ssh/id_ed25519
 ```
 
-引数省略時は `$SUDO_USER` (sudo の呼び出し元ユーザー) が対象。
+> **Note**: `sudo-nopasswd-setup.sh` は汎用スクリプトとして残してあるが、
+> 通常は上記の権限分離手順を使うこと。
+
+## ドキュメント
+
+| ドキュメント | 内容 |
+|-------------|------|
+| [docs/security_hardening.md](docs/security_hardening.md) | セキュリティ対策の全体像・方針・将来検討事項 |
