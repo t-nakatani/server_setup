@@ -61,7 +61,7 @@ Host {host-name}
 | docker-setup | Docker, Docker Compose |
 | zsh-setup | Zsh, peco, git-prompt |
 | ufw-setup | UFW ファイアウォール (SSH ポートのみ許可) |
-| fail2ban-setup | fail2ban (SSH ブルートフォース対策: maxretry=5, bantime=1h) |
+| fail2ban-setup | fail2ban (SSH ブルートフォース対策: 3回失敗で24h BAN, UFW 連携) |
 | unattended-upgrades-setup | セキュリティアップデート自動適用 |
 | uv-setup | uv (Python パッケージマネージャ) |
 

@@ -7,11 +7,14 @@ chmod +x get-docker.sh
 ./get-docker.sh
 rm -f get-docker.sh
 
-# Docker が UFW をバイパスして iptables を直接操作するのを防ぐ
+# Docker デーモンのセキュリティ設定
+# - iptables: false → UFW バイパスを防止
+# - no-new-privileges: true → 全コンテナで権限昇格を禁止
 sudo mkdir -p /etc/docker
 sudo tee /etc/docker/daemon.json > /dev/null <<'EOF'
 {
-  "iptables": false
+  "iptables": false,
+  "no-new-privileges": true
 }
 EOF
 
