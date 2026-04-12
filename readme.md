@@ -3,9 +3,11 @@
 ## 手順概要
 
 1. ユーザー作成・SSH 鍵登録 (手動)
-2. SSH ハードニング (手動)
-3. メインセットアップ (自動: `main-setup.sh`)
-4. 個別設定 (手動: git config, GitHub SSH 鍵, sudo NOPASSWD)
+2. sudo NOPASSWD 設定 (手動) ← **SSH ハードニング前に必須**
+3. SSH ハードニング (手動)
+4. メインセットアップ (自動: `main-setup.sh`)
+5. 個別設定 (手動: git config, GitHub SSH 鍵)
+6. 権限分離 (admin-agent / deploy lockdown)
 
 ---
 
@@ -23,15 +25,23 @@ sudo usermod -aG sudo {username}
 ssh-copy-id {username}@{hostname or ip}
 ```
 
-## 2. SSH ハードニング
+## 2. sudo NOPASSWD 設定
+
+**重要**: SSH ハードニング (Step 3) で root ログインが無効化されるため、先に deploy ユーザーへ sudo NOPASSWD を付与する。これを忘れると管理操作が不能になり、VNC コンソールからの復旧が必要になる。
+
+```
+sudo ./setup/sudo-nopasswd-setup.sh deploy
+```
+
+## 3. SSH ハードニング
 
 ポート番号変更・パスワード認証無効化・root ログイン無効化を行う。
 
 サーバー上でこのリポジトリを clone:
 ```
 cd ~/.ssh
-ssh-keygen -t rsa
-cat id_rsa.pub
+ssh-keygen -t ed25519 -C "$(hostname)-github"
+cat id_ed25519.pub
 # → GitHub に登録
 git clone git@github.com:t-nakatani/server_setup.git
 ```
@@ -48,10 +58,10 @@ Host {host-name}
     HostName {hostname or ip}
     User {username}
     Port 53122
-    IdentityFile ~/.ssh/id_rsa
+    IdentityFile ~/.ssh/id_ed25519
 ```
 
-## 3. メインセットアップ
+## 4. メインセットアップ
 
 以下を一括で実行する:
 
@@ -61,7 +71,7 @@ Host {host-name}
 | docker-setup | Docker, Docker Compose |
 | zsh-setup | Zsh, peco, git-prompt |
 | ufw-setup | UFW ファイアウォール (SSH ポートのみ許可) |
-| fail2ban-setup | fail2ban (SSH ブルートフォース対策: maxretry=5, bantime=1h) |
+| fail2ban-setup | fail2ban (SSH ブルートフォース対策: 3回失敗で24h BAN, UFW 連携) |
 | unattended-upgrades-setup | セキュリティアップデート自動適用 |
 | uv-setup | uv (Python パッケージマネージャ) |
 
@@ -101,7 +111,7 @@ docker --version && docker compose version
 uv --version
 ```
 
-## 4. 個別設定 (手動)
+## 5. 個別設定 (手動)
 
 ### git config
 
@@ -121,12 +131,38 @@ ssh-keyscan github.com >> ~/.ssh/known_hosts
 ssh -T git@github.com
 ```
 
-### sudo NOPASSWD (任意)
+## 6. ユーザー権限分離
 
-指定ユーザーに対してパスワードなしで sudo を許可する。
+Bot 運用 (deploy) とシステム管理 (admin-agent) を分離する。
+Step 4 のメインセットアップ完了後に実行する。
 
+```bash
+# 1. admin-agent ユーザーを作成（sudo NOPASSWD:ALL + deploy の SSH 鍵をコピー）
+sudo ./setup/admin-agent-setup.sh deploy
+
+# 2. deploy ユーザーから sudo 権限を剥奪
+sudo ./setup/deploy-lockdown.sh deploy
 ```
-sudo ./setup/sudo-nopasswd-setup.sh {username}
+
+| ユーザー | 用途 | 権限 |
+|----------|------|------|
+| deploy | Bot デプロイ・運用 | docker グループのみ |
+| admin-agent | ライブラリインストール・システム管理 | sudo NOPASSWD:ALL + docker |
+
+ローカルの `~/.ssh/config` に追加:
+```
+Host {host-name}-admin
+    HostName {hostname or ip}
+    User admin-agent
+    Port 53122
+    IdentityFile ~/.ssh/id_ed25519
 ```
 
-引数省略時は `$SUDO_USER` (sudo の呼び出し元ユーザー) が対象。
+> **Note**: `sudo-nopasswd-setup.sh` は汎用スクリプトとして残してあるが、
+> 通常は上記の権限分離手順を使うこと。
+
+## ドキュメント
+
+| ドキュメント | 内容 |
+|-------------|------|
+| [docs/security_hardening.md](docs/security_hardening.md) | セキュリティ対策の全体像・方針・将来検討事項 |
