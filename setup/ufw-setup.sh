@@ -11,7 +11,7 @@ if ! command -v ufw &> /dev/null; then
 fi
 
 # 現在の SSH ポートを sshd_config から検出 (デフォルト: 22)
-SSH_PORT=$(grep -E '^Port ' /etc/ssh/sshd_config 2>/dev/null | awk '{print $2}')
+SSH_PORT=$(grep -E '^Port ' /etc/ssh/sshd_config 2>/dev/null | head -1 | awk '{print $2}')
 SSH_PORT="${SSH_PORT:-22}"
 echo "Detected SSH port: ${SSH_PORT}"
 

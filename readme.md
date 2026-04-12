@@ -3,9 +3,11 @@
 ## 手順概要
 
 1. ユーザー作成・SSH 鍵登録 (手動)
-2. SSH ハードニング (手動)
-3. メインセットアップ (自動: `main-setup.sh`)
-4. 個別設定 (手動: git config, GitHub SSH 鍵, sudo NOPASSWD)
+2. sudo NOPASSWD 設定 (手動) ← **SSH ハードニング前に必須**
+3. SSH ハードニング (手動)
+4. メインセットアップ (自動: `main-setup.sh`)
+5. 個別設定 (手動: git config, GitHub SSH 鍵)
+6. 権限分離 (admin-agent / deploy lockdown)
 
 ---
 
@@ -23,7 +25,15 @@ sudo usermod -aG sudo {username}
 ssh-copy-id {username}@{hostname or ip}
 ```
 
-## 2. SSH ハードニング
+## 2. sudo NOPASSWD 設定
+
+**重要**: SSH ハードニング (Step 3) で root ログインが無効化されるため、先に deploy ユーザーへ sudo NOPASSWD を付与する。これを忘れると管理操作が不能になり、VNC コンソールからの復旧が必要になる。
+
+```
+sudo ./setup/sudo-nopasswd-setup.sh deploy
+```
+
+## 3. SSH ハードニング
 
 ポート番号変更・パスワード認証無効化・root ログイン無効化を行う。
 
@@ -51,7 +61,7 @@ Host {host-name}
     IdentityFile ~/.ssh/id_ed25519
 ```
 
-## 3. メインセットアップ
+## 4. メインセットアップ
 
 以下を一括で実行する:
 
@@ -101,7 +111,7 @@ docker --version && docker compose version
 uv --version
 ```
 
-## 4. 個別設定 (手動)
+## 5. 個別設定 (手動)
 
 ### git config
 
@@ -121,9 +131,10 @@ ssh-keyscan github.com >> ~/.ssh/known_hosts
 ssh -T git@github.com
 ```
 
-### ユーザー権限分離
+## 6. ユーザー権限分離
 
 Bot 運用 (deploy) とシステム管理 (admin-agent) を分離する。
+Step 4 のメインセットアップ完了後に実行する。
 
 ```bash
 # 1. admin-agent ユーザーを作成（sudo NOPASSWD:ALL + deploy の SSH 鍵をコピー）

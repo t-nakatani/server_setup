@@ -11,14 +11,14 @@ if [ ! -f "${CONFIG_FILE}.bak.original" ]; then
 fi
 cp "$CONFIG_FILE" "${CONFIG_FILE}.bak"
 
-# 既存の sed 置換（デフォルト値のコメント解除対応）
-sed -i 's/^#\?Port 22$/Port '"$SSH_PORT"'/' "$CONFIG_FILE"
-sed -i 's/^#\?PasswordAuthentication yes/PasswordAuthentication no/' "$CONFIG_FILE"
-sed -i 's/^#\?PermitRootLogin yes/PermitRootLogin no/' "$CONFIG_FILE"
-sed -i 's/^#\?PermitRootLogin prohibit-password/PermitRootLogin no/' "$CONFIG_FILE"
-
 # 以前のハードニングブロックがあれば削除して再生成
 sed -i "/${HARDENING_TAG}/,\$d" "$CONFIG_FILE"
+
+# 既存の Port / PasswordAuthentication / PermitRootLogin 行を全て削除
+# （ハードニングブロックで一元管理するため、重複を防ぐ）
+sed -i '/^#\?Port /d' "$CONFIG_FILE"
+sed -i '/^#\?PasswordAuthentication /d' "$CONFIG_FILE"
+sed -i '/^#\?PermitRootLogin /d' "$CONFIG_FILE"
 
 # 追加ハードニング設定を末尾に追記（sed 漏れがあってもここで確実に上書き）
 cat >> "$CONFIG_FILE" <<EOF
